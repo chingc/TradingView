@@ -1,3 +1,3 @@
 # TradingView
 
-Some charts for [TradingView](https://www.tradingview.com/).
+Some indicators for [TradingView](https://www.tradingview.com/).
