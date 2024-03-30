@@ -1,36 +1,43 @@
-//@version=4
+//@version=5
 
-// https://github.com/chingc/TradingView
+// This indicator tracks price change over an arbitrary number of trading sessions.
+// What is the orange number? The orange number is the percentage (in decimal) of bars
+// that are highlighted over a given highlight range. If 3 bars are highlighted over a
+// highlight range of 50, then the orange number will be 0.06.
+// GitHub: https://github.com/chingc/TradingView
 
-study(title="Price Change History", shorttitle="Price Change", precision=2)
+indicator(title='Price Change History', shorttitle='Price Change', precision=2)
 
-src = input(close, title="Source")
-sessions = input(1, title="Trading Sessions", minval=1)  // number of trading sessions to consider
-upper = input(5, title="Highlight Above", type=input.float, minval=0)  // highlight values above this
-lower = input(-5, title="Highlight Below", type=input.float, maxval=0)  // highlight values below this
-range = input(50, title="Highlight Range", minval=1)  // number of trading sessions to consider to calculate percent highlighted
+// user settings
+src = input.source(defval=close, title='Source')
+length = input.int(defval=1, title='Trading Sessions', minval=1)  // trading sessions to consider
+highlightUpper = input.float(defval=5, title='Highlight Above', minval=0)  // highlight values above this
+highlightLower = input.float(defval=-5, title='Highlight Below', maxval=0)  // highlight values below this
+highlightRange = input.int(defval=50, title='Highlight Range', minval=1)  // trading sessions to consider for the orange number
+asPercent = input.bool(defval=true, title='As Percentage') // show change as percentage or as currency
 
-// show change data as a percent or decimal
-dataset = if input(true, title="As Percentage")
-    change(src, sessions) / offset(src, sessions) * 100
-else
-    change(src, sessions)
+// the price change dataset
+dataset = asPercent ? ta.change(src, length) / src[length] * 100 : ta.change(src, length)
 
-// aqua and fuchsia are highlights; green and red are normal
-paint(x) => x > upper ? color.aqua : x < lower ? color.fuchsia : x > 0 ? color.green : color.red
+// paint a bar
+paint(bar) =>
+    switch
+        bar > highlightUpper => color.aqua
+        bar < highlightLower => color.fuchsia
+        bar > 0 => color.green
+        => color.red
 
-// the number of sessions highlighted in a given range as a percent
-highlighted(x) =>
+// draw the bars
+plot(series=dataset, style=plot.style_columns, color=paint(dataset))
+
+// calculate the orange number
+orangeNumber(bars) =>
     count = 0
-    for i = 0 to range - 1
-        if x[i] > upper or x[i] < lower
-            count := count + 1
-    count / range
+    for i = 0 to highlightRange - 1
+        if bars[i] > highlightUpper or bars[i] < highlightLower
+            count += 1
+    count / highlightRange
 
-// plot the change
-plot(dataset, style=plot.style_columns, color=paint(dataset))
-
-// plot the percent hightlighted
-// this will show up as the orange number with a value between 0 and 1
-// the graph itself isn't helpful and is hidden by having transp at 100
-plot(highlighted(dataset), color=color.orange, transp=100)
+// this plot shows the orange number with a value between 0 and 1 (inclusive)
+// the graph itself isn't helpful and is hidden by setting transp to 100
+plot(series=orangeNumber(dataset), color=color.new(color.orange, transp=100))
