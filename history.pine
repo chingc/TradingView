@@ -1,36 +1,39 @@
-//@version=5
+//@version=6
 
-// This indicator tracks price change over an arbitrary number of trading sessions.
-// What is the orange number? The orange number is the percentage (in decimal) of bars
-// that are highlighted over a given highlight range. If 3 bars are highlighted over a
-// highlight range of 50, then the orange number will be 0.06.
-// GitHub: https://github.com/chingc/TradingView
+indicator(title="Price Change History", shorttitle="Price Chg", precision=2)
 
-indicator(title='Price Change History', shorttitle='Price Change', precision=2)
+// FEATURES
+// - Track change over any number of trading sessions.
+// - Highlight bars that rise above a certain value.
+// - Highlight bars that fall below a certain value.
+// - Track the occurrence of highlighted bars.
 
-// user settings
-src = input.source(defval=close, title='Source')
-length = input.int(defval=1, title='Trading Sessions', minval=1)  // trading sessions to consider
-highlightUpper = input.float(defval=5, title='Highlight Above', minval=0)  // highlight values above this
-highlightLower = input.float(defval=-5, title='Highlight Below', maxval=0)  // highlight values below this
-highlightRange = input.int(defval=50, title='Highlight Range', minval=1)  // trading sessions to consider for the orange number
-asPercent = input.bool(defval=true, title='As Percentage') // show change as percentage or as currency
+// Source code on GitHub: https://github.com/chingc/TradingView
+// Follow me on X: https://x.com/NeonNoodle22
 
-// the price change dataset
-dataset = asPercent ? ta.change(src, length) / src[length] * 100 : ta.change(src, length)
+// User settings
+source = input.source(defval=close, title="Source", tooltip="The source for calculations.")
+length = input.int(defval=1, title="Trading Sessions", minval=1, tooltip="Number of trading sessions to consider.")
+highlightUpper = input.float(defval=5, title="Highlight Above", tooltip="Highlight if change rises above this value.")
+highlightLower = input.float(defval=-5, title="Highlight Below", tooltip="Highlight if change falls below this value.")
+highlightRange = input.int(defval=50, title="Highlight Range", minval=1, tooltip="Number of trading sessions to consider when calculating the occurrence of highlighted bars.\n\ne.g. If there are 3 highlighted bars within a highlight range of 50, the answer is 0.06.\n\nThis is the orange number on the status line.")
+asPercent = input.bool(defval=true, title="As Percentage", tooltip="Show change as percentage or as points.")
 
-// paint a bar
-paint(bar) =>
+// Change dataset
+dataset = asPercent ? ta.change(source, length) / source[length] * 100 : ta.change(source, length)
+
+// Return a color depending on the change
+paint(change) =>
     switch
-        bar > highlightUpper => color.aqua
-        bar < highlightLower => color.fuchsia
-        bar > 0 => color.green
+        change > highlightUpper => color.aqua
+        change < highlightLower => color.fuchsia
+        change >= 0 => color.green
         => color.red
 
-// draw the bars
-plot(series=dataset, style=plot.style_columns, color=paint(dataset))
+// Draw the bars
+plot(series=dataset, color=paint(dataset), style=plot.style_columns)
 
-// calculate the orange number
+// Calculate the occurrence of highlighted bars within the highlight range
 orangeNumber(bars) =>
     count = 0
     for i = 0 to highlightRange - 1
@@ -38,6 +41,5 @@ orangeNumber(bars) =>
             count += 1
     count / highlightRange
 
-// this plot shows the orange number with a value between 0 and 1 (inclusive)
-// the graph itself isn't helpful and is hidden by setting transp to 100
-plot(series=orangeNumber(dataset), color=color.new(color.orange, transp=100))
+// Display the orange number on the status line
+plot(series=orangeNumber(dataset), color=color.orange, display=display.status_line)
