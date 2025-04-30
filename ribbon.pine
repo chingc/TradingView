@@ -1,33 +1,36 @@
-//@version=5
+//@version=6
 
-// This indicator draws a ribbon of moving averages.
-// GitHub: https://github.com/chingc/TradingView
+indicator(title="Moving Average Ribbon", shorttitle="Ribbon", overlay=true)
 
-indicator(title='Moving Average Ribbon', shorttitle='Ribbon', overlay=true)
+// FEATURES
+// - Draws a ribbon of moving averages.
 
-// user settings
-src = input.source(defval=close, title='Source')
-exp = input.bool(defval=true, title='Exponential')
-show100 = input.bool(defval=true, title='MA 100')
-show200 = input.bool(defval=true, title='MA 200')
+// Source code on GitHub: https://github.com/chingc/TradingView
+// Follow me on X: https://x.com/NeonNoodle22
 
-// return a moving average of the given length
+// User settings
+source = input.source(defval=close, title="Source", tooltip="The source for calculations.")
+exponential = input.bool(defval=true, title="Exponential", tooltip="Use EMA instead of SMA.")
+show100 = input.bool(defval=true, title="MA 100", tooltip="Show 100 day moving average.")
+show200 = input.bool(defval=true, title="MA 200", tooltip="Show 200 day moving average.")
+
+// Return a moving average of the given length
 ma(length) =>
-    exp ? ta.ema(src, length) : ta.sma(src, length)
+    exponential ? ta.ema(source, length) : ta.sma(source, length)
 
-// draw moving averages
-plot(series=ma(20), title='MA 20', color=#FFFF0080)
-plot(series=ma(25), title='MA 25', color=#FFDF0080)
-plot(series=ma(30), title='MA 30', color=#FFBF0080)
-plot(series=ma(35), title='MA 35', color=#FF9F0080)
-plot(series=ma(40), title='MA 40', color=#FF7F0080)
-plot(series=ma(45), title='MA 45', color=#FF5F0080)
-plot(series=ma(50), title='MA 50', color=#FF3F0080)
+// Draw moving averages
+plot(series=ma(20), title="MA 20", color=#FFFF0080)
+plot(series=ma(25), title="MA 25", color=#FFDF0080)
+plot(series=ma(30), title="MA 30", color=#FFBF0080)
+plot(series=ma(35), title="MA 35", color=#FF9F0080)
+plot(series=ma(40), title="MA 40", color=#FF7F0080)
+plot(series=ma(45), title="MA 45", color=#FF5F0080)
+plot(series=ma(50), title="MA 50", color=#FF3F0080)
 
 ma100 = show100 ? ma(100) : na
 ma200 = show200 ? ma(200) : na
-p100 = plot(series=ma100, title='MA 100', color=#FF0000FF)
-p200 = plot(series=ma200, title='MA 200', color=#800000FF)
+p100 = plot(series=ma100, title="MA 100", color=#FF0000FF)
+p200 = plot(series=ma200, title="MA 200", color=#800000FF)
 
-// fill the area between ma100 and ma200
-fill(plot1=p100, plot2=p200, color=ma100 > ma200 ? #4CAF5033 : #FF525233, title='MA Fill')
+// Color the area between ma100 and ma200
+fill(plot1=p100, plot2=p200, color=ma100 > ma200 ? #4CAF5033 : #FF525233, title="MA Fill")
